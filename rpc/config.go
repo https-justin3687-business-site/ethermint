@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -105,7 +104,7 @@ func registerRoutes(rs *lcd.RestServer) {
 }
 
 func unlockKeyFromNameAndPassphrase(accountName, passphrase string) (emintKey emintcrypto.PrivKeySecp256k1, err error) {
-	keybase, err := keyring.NewKeyring(
+	kb, err := keyring.New(
 		sdk.KeyringServiceName(),
 		viper.GetString(flags.FlagKeyringBackend),
 		viper.GetString(flags.FlagHome),
@@ -116,16 +115,13 @@ func unlockKeyFromNameAndPassphrase(accountName, passphrase string) (emintKey em
 	}
 
 	// With keyring keybase, password is not required as it is pulled from the OS prompt
-	privKey, err := keybase.ExportPrivateKeyObject(accountName, passphrase)
+	armored, err := kb.ExportPrivKeyArmor(accountName, passphrase)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	var ok bool
-	emintKey, ok = privKey.(emintcrypto.PrivKeySecp256k1)
-	if !ok {
-		panic(fmt.Sprintf("invalid private key type: %T", privKey))
-	}
+	privKey := []byte(armored)
+	// Converts key to Ethermint secp256 implementation
 
-	return
+	return emintcrypto.PrivKeySecp256k1(privKey), nil
 }

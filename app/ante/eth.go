@@ -8,7 +8,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	emint "github.com/cosmos/ethermint/types"
@@ -246,14 +245,14 @@ func (nvd NonceVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 // gas consumption.
 type EthGasConsumeDecorator struct {
 	ak auth.AccountKeeper
-	sk types.SupplyKeeper
+	bk bank.Keeper
 }
 
 // NewEthGasConsumeDecorator creates a new EthGasConsumeDecorator
-func NewEthGasConsumeDecorator(ak auth.AccountKeeper, sk types.SupplyKeeper) EthGasConsumeDecorator {
+func NewEthGasConsumeDecorator(ak auth.AccountKeeper, bk bank.Keeper) EthGasConsumeDecorator {
 	return EthGasConsumeDecorator{
 		ak: ak,
-		sk: sk,
+		bk: bk,
 	}
 }
 
@@ -306,7 +305,7 @@ func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 			sdk.NewCoin(emint.DenomDefault, sdk.NewIntFromBigInt(cost)),
 		)
 
-		err = auth.DeductFees(egcd.sk, ctx, senderAcc, feeAmt)
+		err = auth.DeductFees(egcd.bk, ctx, senderAcc, feeAmt)
 		if err != nil {
 			return ctx, err
 		}

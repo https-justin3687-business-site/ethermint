@@ -2,8 +2,8 @@ package codec
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -21,11 +21,12 @@ var (
 // Codec is a wrapper of the SDK standard Codec. It extends the Account interface
 // by adding the EthAccount type for ethereum accounts.
 type Codec struct {
-	*codecstd.Codec
+	*std.Codec
 }
 
+// NewAppCodec creates a new Codec instance
 func NewAppCodec(amino *codec.Codec) *Codec {
-	return &Codec{codecstd.NewAppCodec(amino)}
+	return &Codec{std.NewAppCodec(amino)}
 }
 
 // MarshalAccount marshals an Account interface. If the given type implements

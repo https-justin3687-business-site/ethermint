@@ -4,14 +4,12 @@ import (
 	"bufio"
 	"io"
 
-	"github.com/tendermint/tendermint/crypto"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clientkeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	emintCrypto "github.com/cosmos/ethermint/crypto"
+	emintcrypto "github.com/cosmos/ethermint/crypto"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,17 +50,18 @@ func keyCommands() *cobra.Command {
 	return cmd
 }
 
-func getKeybase(transient bool, buf io.Reader) (keyring.Keybase, error) {
+func getKeybase(transient bool, buf io.Reader) (keyring.Keyring, error) {
 	if transient {
-		return keyring.NewInMemory(keyring.WithKeygenFunc(ethermintKeygenFunc)), nil
+		return keyring.NewInMemory(emintcrypto.EthSeckp256k1Option), nil
 	}
 
-	return keyring.NewKeyring(
+	return keyring.New(
 		sdk.KeyringServiceName(),
 		viper.GetString(flags.FlagKeyringBackend),
 		viper.GetString(flags.FlagHome),
 		buf,
-		keyring.WithKeygenFunc(ethermintKeygenFunc))
+		emintcrypto.EthSeckp256k1Option,
+	)
 }
 
 func runAddCmd(cmd *cobra.Command, args []string) error {
@@ -73,8 +72,4 @@ func runAddCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return clientkeys.RunAddCmd(cmd, args, kb, inBuf)
-}
-
-func ethermintKeygenFunc(bz []byte, algo keyring.SigningAlgo) (crypto.PrivKey, error) {
-	return emintCrypto.PrivKeySecp256k1(bz), nil
 }

@@ -33,7 +33,7 @@ func unsafeExportEthKeyCommand() *cobra.Command {
 func runExportCmd(cmd *cobra.Command, args []string) error {
 	inBuf := bufio.NewReader(cmd.InOrStdin())
 
-	kb, err := keyring.NewKeyring(
+	kb, err := keyring.New(
 		sdk.KeyringServiceName(),
 		viper.GetString(flags.FlagKeyringBackend),
 		viper.GetString(flags.FlagHome),
@@ -54,23 +54,21 @@ func runExportCmd(cmd *cobra.Command, args []string) error {
 	case keyring.BackendOS:
 		conf, err = input.GetConfirmation(
 			"**WARNING** this is an unsafe way to export your unencrypted private key, are you sure?",
-			inBuf)
+			inBuf, cmd.ErrOrStderr())
 	}
 	if err != nil || !conf {
 		return err
 	}
 
 	// Exports private key from keybase using password
-	privKey, err := kb.ExportPrivateKeyObject(args[0], decryptPassword)
+	armored, err := kb.ExportPrivKeyArmor(args[0], decryptPassword)
 	if err != nil {
 		return err
 	}
 
+	privKey := []byte(armored)
 	// Converts key to Ethermint secp256 implementation
-	emintKey, ok := privKey.(emintcrypto.PrivKeySecp256k1)
-	if !ok {
-		return fmt.Errorf("invalid private key type, must be Ethereum key: %T", privKey)
-	}
+	emintKey := emintcrypto.PrivKeySecp256k1(privKey)
 
 	// Formats key for output
 	privB := ethcrypto.FromECDSA(emintKey.ToECDSA())
